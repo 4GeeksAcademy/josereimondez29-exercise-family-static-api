@@ -2,11 +2,10 @@
 This module takes care of starting the API Server, Loading the DB and Adding the endpoints
 """
 import os
-from flask import Flask, request, jsonify, url_for
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 from utils import APIException, generate_sitemap
 from datastructures import FamilyStructure
-#from models import Person
 
 app = Flask(__name__)
 app.url_map.strict_slashes = False
@@ -27,11 +26,10 @@ def sitemap():
 
 @app.route('/members', methods=['GET'])
 def handle_hello():
-
-    # this is how you can use the Family datastructure by calling its methods
     members = jackson_family.get_all_members()
     return jsonify(members), 200
 
+#Post User
 @app.route('/member', methods=['POST'])
 def add_member():
     body = request.get_json()
@@ -43,50 +41,36 @@ def add_member():
             "lucky_numbers": body["lucky_numbers"]
         }
     jackson_family.add_member(new_member)
-    print(body)
     return jsonify("add member completed"), 200
 
-#### GET 1 ####
-@app.route('/members/<int:member_id>', methods=['GET'])
-def get_specific_member(member_id): #whatever we put as id after the endpoint we need to also pass it as a parameter here
-    single_member = jackson_family.get_member(member_id) # this is the method for getting a particular family member from the list. 
-    if single_member:
-        response_body = {"message": "family member found",
-                        "results": single_member }
-        return jsonify(response_body), 200
-    response_body = {"message": "family member not found",
-                            "results": [] }
-    return jsonify(response_body), 404
-    
-#### DELETE ####
-@app.route('/members/<int:member_id>', methods=['DELETE'])
-def handle_delete_member(member_id):   #whatever we put as id after the endpoint we need to also pass it as a parameter here   
-    deleted_member = jackson_family.delete_member(member_id) # this is the method for deleting a family member from the list. 
+#Get user by ID
+@app.route('/member/<int:id>', methods=['GET'])
+def get_specific_member(id):
+    member = jackson_family.get_member(id)
+    if member:
+        member['name'] = member['first_name']  
+        return jsonify(member), 200
+    return jsonify({"message": "Member not found"}), 404
+
+#Delete user by ID
+@app.route('/member/<int:id>', methods=['DELETE'])
+def delete_member(id):
+    deleted_member = jackson_family.delete_member(id)
     if deleted_member:
-        response_body = {"message": "family member deleted",
-                        "results": deleted_member }
-        return jsonify(response_body), 200
-    response_body = {"message": "family member not found",
-                    }
-    return jsonify(response_body), 404
+        return jsonify({"done": True}), 200  
+    return jsonify({"message": "Member not found"}), 404
 
-    
-#### PUT ####
-@app.route('/members/<int:member_id>', methods=['PUT'])
-def handle_update_member(member_id):   #whatever we put as id after the endpoint we need to also pass it as a parameter here   
-      # Get the updated member data from the request body
+#Update member by ID
+@app.route('/member/<int:id>', methods=['PUT'])
+def update_member(id):
     updated_member_data = request.json
-    updated_member = jackson_family.update_member(member_id, updated_member_data) # this is the method for updating a family member from the list. 
+    updated_member = jackson_family.update_member(id, updated_member_data)
     if updated_member:
-        response_body = {"message": "family member updated",
-                        "results": updated_member }
-        return jsonify(response_body), 200
-    response_body = {"message": "family member not found",
-                    }
-    return jsonify(response_body), 404
-# REMEMBER: When sending a PUT request with JSON data, make sure to set the in Postman headers the "Content-Type" (key) as "application/json" (value)!
+        return jsonify({"message": "Family member updated", "results": updated_member}), 200
+    return jsonify({"message": "Family member not found"}), 404
 
-# this only runs if `$ python src/app.py` is executed
 if __name__ == '__main__':
     PORT = int(os.environ.get('PORT', 3000))
     app.run(host='0.0.0.0', port=PORT, debug=True)
+
+
