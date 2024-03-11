@@ -35,30 +35,20 @@ class FamilyStructure:
         return randint(0, 99999999)
 
     def add_member(self, member):
-        member["id"] = self._generateId()
-        member["last_name"] = self.last_name
-        self._members.append(member)
+       self._members.append(member)
+       return self._members
 
     def delete_member(self, id):
         for member in self._members:
             if member["id"] == id:
                 self._members.remove(member)
-                return member
-        return None
-
-    def update_member(self, id, updated_info):
-        for member in self._members:
-            if member["id"] == id:
-                member.update(updated_info)
-                return member
-        return None
+                return member 
 
     def get_member(self, id):
         for member in self._members:
             if member["id"] == id:
                 return member
-        return None
-
+       
     def get_all_members(self):
         return self._members
 

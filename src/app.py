@@ -25,49 +25,42 @@ def sitemap():
     return generate_sitemap(app)
 
 @app.route('/members', methods=['GET'])
-def handle_hello():
+def get_members():
+
     members = jackson_family.get_all_members()
     return jsonify(members), 200
 
 #Post User
 @app.route('/member', methods=['POST'])
-def add_member():
+def create_member():
     body = request.get_json()
     new_member = {
-            "id": jackson_family._generateId(),
-            "first_name": body["first_name"],
-            "last_name": jackson_family.last_name,
-            "age": body["age"],
-            "lucky_numbers": body["lucky_numbers"]
-        }
+        "id": body["id"],
+        "first_name": body["first_name"],
+        "age": body["age"],
+        "lucky_numbers": body["lucky_numbers"]
+    }
     jackson_family.add_member(new_member)
-    return jsonify("add member completed"), 200
+    response_body = {
+        "msg": "New member successfully added",
+        "member":  new_member
+    }
+    return jsonify(response_body), 200
 
 #Get user by ID
 @app.route('/member/<int:id>', methods=['GET'])
-def get_specific_member(id):
+def get_member(id):
+
     member = jackson_family.get_member(id)
-    if member:
-        member['name'] = member['first_name']  
-        return jsonify(member), 200
-    return jsonify({"message": "Member not found"}), 404
+    return jsonify(member), 200
 
 #Delete user by ID
 @app.route('/member/<int:id>', methods=['DELETE'])
 def delete_member(id):
-    deleted_member = jackson_family.delete_member(id)
-    if deleted_member:
-        return jsonify({"done": True}), 200  
-    return jsonify({"message": "Member not found"}), 404
+    member = jackson_family.delete_member(id)
+    return jsonify({"done" : True, "deleted_member": member}), 200
 
-#Update member by ID
-@app.route('/member/<int:id>', methods=['PUT'])
-def update_member(id):
-    updated_member_data = request.json
-    updated_member = jackson_family.update_member(id, updated_member_data)
-    if updated_member:
-        return jsonify({"message": "Family member updated", "results": updated_member}), 200
-    return jsonify({"message": "Family member not found"}), 404
+
 
 if __name__ == '__main__':
     PORT = int(os.environ.get('PORT', 3000))
